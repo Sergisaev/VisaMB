@@ -385,6 +385,8 @@ class Intake:
                     parts = chunks(application_text(application))
                     url = "https://t.me/" + who["username"] if who["username"] else "tg://user?id=" + str(chat_id)
                     for index, part in enumerate(parts):
+                        if len(parts) > 1:
+                            part = f"Заявка №{session['id'].upper()} · часть {index + 1}/{len(parts)}\n\n" + part
                         op = message(None, part, {"inline_keyboard": [[{"text": "Открыть профиль клиента", "url": url}]]})
                         op["recipient"] = True
                         if index == len(parts) - 1:

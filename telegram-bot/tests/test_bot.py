@@ -273,6 +273,27 @@ class IntakeTests(unittest.TestCase):
         self.assertEqual("".join(parts), value)
         self.assertTrue(all(len(part.encode("utf-16-le")) // 2 <= 3500 for part in parts))
 
+    def test_large_application_parts_keep_the_same_reference(self):
+        f = self.flow
+        user = {**CLIENT,"first_name":"🌍"*64,"last_name":"🌍"*64}
+        initial = len(f.telegram.messages(OWNER["id"]))
+        f.message("/start", user)
+        f.message("🌍" * 80, user)
+        f.click("pick:destination:japan", user)
+        f.message("🌍" * 200, user)
+        f.message("🌍" * 240, user)
+        f.message("🌍" * 240, user)
+        f.message("🌍" * 400, user)
+        f.message("🌍" * 400, user)
+        f.click("submit", user)
+        parts = f.telegram.messages(OWNER["id"])[initial:]
+        self.assertGreater(len(parts), 1)
+        reference = f.session()["id"].upper()
+        for number, part in enumerate(parts, 1):
+            self.assertTrue(part["text"].startswith(f"Заявка №{reference} · часть {number}/{len(parts)}"))
+            self.assertLessEqual(len(part["text"].encode("utf-16-le")) // 2, 4096)
+        self.assertEqual(f.store.get("application:" + f.session()["id"])["status"], "sent")
+
     def test_unregistered_recipient_blocks_intake_and_cannot_be_hijacked(self):
         f = Flow()
         f.message("/start")
