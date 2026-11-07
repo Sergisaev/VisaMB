@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+settings.local.json
+.deploy-state.json
+dist/
+.venv/

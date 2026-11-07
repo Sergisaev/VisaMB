@@ -1,0 +1,9 @@
+{
+  "bot_token": "",
+  "webhook_secret": "",
+  "recipient_username": "sergikos9",
+  "recipient_chat_id": "",
+  "region": "",
+  "stack_name": "visamb-telegram-bot",
+  "data_retention_days": 30
+}

@@ -1,0 +1,119 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "VisaMB Telegram intake: Lambda Function URL, persistent state and ordered delivery retries",
+  "Parameters": {
+    "BotToken": {"Type": "String", "NoEcho": true, "MinLength": 1},
+    "WebhookSecret": {"Type": "String", "NoEcho": true, "MinLength": 16, "MaxLength": 256, "AllowedPattern": "[A-Za-z0-9_-]+"},
+    "RecipientUsername": {"Type": "String", "Default": "sergikos9", "AllowedPattern": "[a-zA-Z0-9_]{5,32}"},
+    "RecipientChatId": {"Type": "String", "Default": "", "AllowedPattern": "^$|^[1-9][0-9]*$"},
+    "DataRetentionDays": {"Type": "Number", "Default": 30, "MinValue": 1, "MaxValue": 365}
+  },
+  "Resources": {
+    "State": {
+      "Type": "AWS::DynamoDB::Table",
+      "DeletionPolicy": "Retain",
+      "UpdateReplacePolicy": "Retain",
+      "Properties": {
+        "BillingMode": "PAY_PER_REQUEST",
+        "AttributeDefinitions": [{"AttributeName": "pk", "AttributeType": "S"}],
+        "KeySchema": [{"AttributeName": "pk", "KeyType": "HASH"}],
+        "TimeToLiveSpecification": {"AttributeName": "expires_at", "Enabled": true},
+        "SSESpecification": {"SSEEnabled": true}
+      }
+    },
+    "FailedUpdates": {
+      "Type": "AWS::SQS::Queue",
+      "Properties": {
+        "QueueName": {"Fn::Sub": "${AWS::StackName}-failed.fifo"},
+        "FifoQueue": true,
+        "MessageRetentionPeriod": 1209600,
+        "SqsManagedSseEnabled": true
+      }
+    },
+    "Updates": {
+      "Type": "AWS::SQS::Queue",
+      "Properties": {
+        "QueueName": {"Fn::Sub": "${AWS::StackName}-updates.fifo"},
+        "FifoQueue": true,
+        "VisibilityTimeout": 360,
+        "MessageRetentionPeriod": 345600,
+        "SqsManagedSseEnabled": true,
+        "RedrivePolicy": {"deadLetterTargetArn": {"Fn::GetAtt": ["FailedUpdates", "Arn"]}, "maxReceiveCount": 5}
+      }
+    },
+    "BotRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [{"Effect": "Allow", "Principal": {"Service": "lambda.amazonaws.com"}, "Action": "sts:AssumeRole"}]
+        },
+        "ManagedPolicyArns": [{"Fn::Sub": "arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"}],
+        "Policies": [{
+          "PolicyName": "IntakeStateAndQueue",
+          "PolicyDocument": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {"Effect": "Allow", "Action": ["dynamodb:GetItem", "dynamodb:PutItem"], "Resource": {"Fn::GetAtt": ["State", "Arn"]}},
+              {"Effect": "Allow", "Action": ["sqs:SendMessage", "sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:GetQueueAttributes", "sqs:ChangeMessageVisibility"], "Resource": {"Fn::GetAtt": ["Updates", "Arn"]}}
+            ]
+          }
+        }]
+      }
+    },
+    "Bot": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Runtime": "python3.13",
+        "Handler": "index.lambda_handler",
+        "Architectures": ["arm64"],
+        "MemorySize": 256,
+        "Timeout": 60,
+        "Role": {"Fn::GetAtt": ["BotRole", "Arn"]},
+        "Code": {"ZipFile": "__BOT_SOURCE__"},
+        "Environment": {"Variables": {
+          "BOT_TOKEN": {"Ref": "BotToken"},
+          "WEBHOOK_SECRET": {"Ref": "WebhookSecret"},
+          "RECIPIENT_USERNAME": {"Ref": "RecipientUsername"},
+          "RECIPIENT_CHAT_ID": {"Ref": "RecipientChatId"},
+          "STATE_TABLE": {"Ref": "State"},
+          "UPDATE_QUEUE_URL": {"Ref": "Updates"},
+          "DATA_RETENTION_DAYS": {"Ref": "DataRetentionDays"}
+        }}
+      }
+    },
+    "Logs": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {"LogGroupName": {"Fn::Sub": "/aws/lambda/${Bot}"}, "RetentionInDays": 14}
+    },
+    "Webhook": {
+      "Type": "AWS::Lambda::Url",
+      "Properties": {"AuthType": "NONE", "TargetFunctionArn": {"Fn::GetAtt": ["Bot", "Arn"]}}
+    },
+    "AllowFunctionUrl": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {"Action": "lambda:InvokeFunctionUrl", "FunctionName": {"Ref": "Bot"}, "Principal": "*", "FunctionUrlAuthType": "NONE"}
+    },
+    "AllowInvokeViaUrl": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {"Action": "lambda:InvokeFunction", "FunctionName": {"Ref": "Bot"}, "Principal": "*", "InvokedViaFunctionUrl": true}
+    },
+    "ConsumeUpdates": {
+      "Type": "AWS::Lambda::EventSourceMapping",
+      "Properties": {
+        "EventSourceArn": {"Fn::GetAtt": ["Updates", "Arn"]},
+        "FunctionName": {"Ref": "Bot"},
+        "BatchSize": 1,
+        "FunctionResponseTypes": ["ReportBatchItemFailures"],
+        "ScalingConfig": {"MaximumConcurrency": 2},
+        "Enabled": true
+      }
+    }
+  },
+  "Outputs": {
+    "WebhookUrl": {"Value": {"Fn::GetAtt": ["Webhook", "FunctionUrl"]}},
+    "FunctionName": {"Value": {"Ref": "Bot"}},
+    "StateTable": {"Value": {"Ref": "State"}},
+    "FailedUpdatesQueue": {"Value": {"Ref": "FailedUpdates"}}
+  }
+}
