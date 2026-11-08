@@ -43,6 +43,21 @@ async function closeDialog(page, selector) {
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(`http://127.0.0.1:${server.address().port}/`, {waitUntil:'networkidle'});
     await page.evaluate(() => document.fonts.ready);
+    const telegramLinks=await page.locator('[data-telegram]').evaluateAll(links=>links.map(link=>({href:link.href,target:link.target,rel:link.rel})));
+    assert.equal(telegramLinks.length,5);
+    for(const link of telegramLinks){
+      assert.equal(link.href,'https://t.me/VisaMB_consult_bot');
+      assert.equal(link.target,'_blank');
+      assert.ok(link.rel.includes('noopener'));
+    }
+    await context.route('https://t.me/**',route=>route.fulfill({status:200,contentType:'text/html',body:'Telegram navigation test'}));
+    const popupEvent=page.waitForEvent('popup');
+    await page.locator('.hero [data-telegram]').click();
+    const popup=await popupEvent;
+    await popup.waitForLoadState();
+    assert.equal(popup.url(),'https://t.me/VisaMB_consult_bot');
+    assert.equal(await page.locator('#telegram-dialog').evaluate(dialog=>dialog.open),false);
+    await popup.close();
 
     for (const [width,height] of sizes) {
       await page.setViewportSize({width,height});
@@ -95,14 +110,14 @@ async function closeDialog(page, selector) {
 
     // Opening a dialog from the page footer must not jump back to the top after closing.
     await page.setViewportSize({width:390,height:844});
-    const contactLink=page.locator('.telegram-card [data-telegram]');
+    const contactLink=page.locator('.telegram-card [data-messenger="whatsapp"]');
     await contactLink.scrollIntoViewIfNeeded();
     const scrollBefore=await page.evaluate(()=>scrollY);
     assert.ok(scrollBefore>1000);
     await contactLink.click();
     assert.ok(await page.evaluate(()=>document.documentElement.classList.contains('modal-open')));
     assert.equal(await page.evaluate(()=>getComputedStyle(document.body).position),'fixed');
-    await closeDialog(page,'#telegram-dialog');
+    await closeDialog(page,'#messenger-dialog');
     assert.ok(Math.abs(await page.evaluate(()=>scrollY)-scrollBefore)<2,'Dialog close lost the reading position');
 
     await page.locator('.alternative-contact>summary').click();
