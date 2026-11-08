@@ -37,7 +37,7 @@ class DeployTests(unittest.TestCase):
         example=json.loads((deploy.ROOT/"settings.example.json").read_text())
         self.assertEqual(example["bot_token"],"")
         self.assertEqual(example["webhook_secret"],"")
-        self.assertEqual(example["recipient_username"],"sergikos9")
+        self.assertEqual(example["recipient_username"],"maa_ri888")
 
     def test_zip_only_contains_the_runtime_code(self):
         with tempfile.TemporaryDirectory() as folder:
@@ -58,7 +58,7 @@ class DeployTests(unittest.TestCase):
 
     def test_parameters_are_private_files_and_updates_can_be_repeated(self):
         config={"region":"eu-central-1","stack_name":"test-visamb","bot_token":"12345:TEST_ONLY_TOKEN",
-                "webhook_secret":"test_webhook_secret_123","recipient_username":"sergikos9","recipient_chat_id":"","data_retention_days":30}
+                "webhook_secret":"test_webhook_secret_123","recipient_username":"maa_ri888","recipient_chat_id":"","data_retention_days":30}
         captured=[]
 
         def fake_aws(region,*args,allow_error=False):
@@ -82,7 +82,7 @@ class DeployTests(unittest.TestCase):
 
     def test_first_deploy_creates_waits_then_reads_outputs(self):
         config={"region":"eu-central-1","stack_name":"test-visamb","bot_token":"12345:TEST_ONLY_TOKEN",
-                "webhook_secret":"test_webhook_secret_123","recipient_username":"sergikos9","recipient_chat_id":"","data_retention_days":30}
+                "webhook_secret":"test_webhook_secret_123","recipient_username":"maa_ri888","recipient_chat_id":"","data_retention_days":30}
         calls=[]
         def fake_aws(region,*args,allow_error=False):
             calls.append(args)
@@ -96,7 +96,7 @@ class DeployTests(unittest.TestCase):
 
     def test_one_command_configures_webhook_without_discarding_pending_customers(self):
         fake_config={"region":"eu-central-1","stack_name":"test-visamb","bot_token":"12345:TEST_ONLY_TOKEN",
-                     "webhook_secret":"","recipient_username":"sergikos9","recipient_chat_id":"","data_retention_days":30}
+                     "webhook_secret":"","recipient_username":"maa_ri888","recipient_chat_id":"","data_retention_days":30}
         url="https://example.lambda-url.eu-central-1.on.aws/"
         def telegram(token,method,args):
             if method=="getMe":return {"is_bot":True,"username":"VisaMB_test_bot"}

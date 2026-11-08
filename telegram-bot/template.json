@@ -4,7 +4,7 @@
   "Parameters": {
     "BotToken": {"Type": "String", "NoEcho": true, "MinLength": 1},
     "WebhookSecret": {"Type": "String", "NoEcho": true, "MinLength": 16, "MaxLength": 256, "AllowedPattern": "[A-Za-z0-9_-]+"},
-    "RecipientUsername": {"Type": "String", "Default": "sergikos9", "AllowedPattern": "[a-zA-Z0-9_]{5,32}"},
+    "RecipientUsername": {"Type": "String", "Default": "maa_ri888", "AllowedPattern": "[a-zA-Z0-9_]{5,32}"},
     "RecipientChatId": {"Type": "String", "Default": "", "AllowedPattern": "^$|^[1-9][0-9]*$"},
     "DataRetentionDays": {"Type": "Number", "Default": 30, "MinValue": 1, "MaxValue": 365}
   },

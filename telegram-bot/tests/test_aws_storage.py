@@ -23,7 +23,7 @@ except ImportError:
 class AwsStorageTests(unittest.TestCase):
     def setUp(self):
         self.environment=mock.patch.dict(os.environ,{"BOT_TOKEN":"12345:TEST_ONLY_TOKEN",
-            "WEBHOOK_SECRET":"test_webhook_secret_123","STATE_TABLE":"test-table","RECIPIENT_USERNAME":"sergikos9"})
+            "WEBHOOK_SECRET":"test_webhook_secret_123","STATE_TABLE":"test-table","RECIPIENT_USERNAME":"maa_ri888"})
         self.environment.start()
         self.aws=mock_aws()
         self.aws.start()
@@ -43,7 +43,7 @@ class AwsStorageTests(unittest.TestCase):
         self.db=boto3.client("dynamodb",region_name="us-east-1")
         self.db.create_table(TableName="test-table",BillingMode="PAY_PER_REQUEST",
             KeySchema=[{"AttributeName":"pk","KeyType":"HASH"}],AttributeDefinitions=[{"AttributeName":"pk","AttributeType":"S"}])
-        self.settings=bot.Settings("12345:TEST_ONLY_TOKEN","test_webhook_secret_123","sergikos9",table_name="test-table")
+        self.settings=bot.Settings("12345:TEST_ONLY_TOKEN","test_webhook_secret_123","maa_ri888",table_name="test-table")
         self.store=bot.DynamoStore(self.settings)
 
     def tearDown(self):
@@ -89,8 +89,8 @@ class AwsStorageTests(unittest.TestCase):
         self.assertEqual(self.store.get("update:100")["cursor"],1)
 
     def test_owner_binding_does_not_expire_but_client_data_does(self):
-        self.store.commit(101,{"recipient:sergikos9":{"chat_id":1001},"session:2002":{"field":"name"}},[])
-        owner=self.db.get_item(TableName="test-table",Key={"pk":{"S":"bot:12345:recipient:sergikos9"}})["Item"]
+        self.store.commit(101,{"recipient:maa_ri888":{"chat_id":1001},"session:2002":{"field":"name"}},[])
+        owner=self.db.get_item(TableName="test-table",Key={"pk":{"S":"bot:12345:recipient:maa_ri888"}})["Item"]
         session=self.db.get_item(TableName="test-table",Key={"pk":{"S":"bot:12345:session:2002"}})["Item"]
         self.assertNotIn("expires_at",owner)
         self.assertIn("expires_at",session)

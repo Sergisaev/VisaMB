@@ -30,7 +30,7 @@ CloudFormation, дождётся запуска ресурсов, зарегис
 python3 telegram-bot/deploy.py --region eu-west-1
 ```
 
-4. Откройте полученную ссылку **с аккаунта @sergikos9** и один раз нажмите
+4. Откройте полученную ссылку **с аккаунта @maa_ri888** и один раз нажмите
    **Start**. Бот подтвердит получение заявок. Это единственное служебное действие
    получателя, клиентам оно не показывается.
 5. Для самостоятельной проверки в этом же аккаунте отправьте **/request**.
@@ -54,7 +54,7 @@ CloudWatch Logs. Учётные данные AWS не помещаются в к
 ```python
 BOT_TOKEN = ""
 WEBHOOK_SECRET = ""
-RECIPIENT_USERNAME = "sergikos9"
+RECIPIENT_USERNAME = "maa_ri888"
 RECIPIENT_CHAT_ID = ""
 ```
 
@@ -70,7 +70,7 @@ cp telegram-bot/settings.example.json telegram-bot/settings.local.json
 {
   "bot_token": "",
   "webhook_secret": "",
-  "recipient_username": "sergikos9",
+  "recipient_username": "maa_ri888",
   "recipient_chat_id": "",
   "region": "",
   "stack_name": "visamb-telegram-bot",

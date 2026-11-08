@@ -9,7 +9,7 @@ from unittest import mock
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import lambda_function as bot
 
-OWNER = {"id": 1001, "first_name": "Сергей", "username": "sergikos9"}
+OWNER = {"id": 1001, "first_name": "Сергей", "username": "maa_ri888"}
 CLIENT = {"id": 2002, "first_name": "Мария", "last_name": "Тестовая", "username": "maria_client"}
 
 
@@ -57,7 +57,7 @@ class Flow:
     def __init__(self, store=None, settings=None):
         self.store = store or MemoryStore()
         self.telegram = FakeTelegram()
-        self.settings = settings or bot.Settings("12345:TEST_ONLY_TOKEN", "test_webhook_secret_123", "sergikos9", table_name="test", queue_url="test")
+        self.settings = settings or bot.Settings("12345:TEST_ONLY_TOKEN", "test_webhook_secret_123", "maa_ri888", table_name="test", queue_url="test")
         self.queue = mock.Mock()
         self.runtime = bot.Runtime(self.settings, self.store, self.telegram, self.queue)
         self.update_id = 0
@@ -298,7 +298,7 @@ class IntakeTests(unittest.TestCase):
         f = Flow()
         f.message("/start")
         self.assertIsNone(f.session())
-        self.assertIsNone(f.store.get("recipient:sergikos9"))
+        self.assertIsNone(f.store.get("recipient:maa_ri888"))
         self.assertIn("готовится", f.telegram.messages(CLIENT["id"])[-1]["text"])
 
     def test_explicit_recipient_id_routes_without_username_registration(self):

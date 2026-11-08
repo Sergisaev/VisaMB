@@ -19,7 +19,7 @@ from functools import lru_cache
 # Editable defaults. Real values may be supplied through Lambda environment variables.
 BOT_TOKEN = ""
 WEBHOOK_SECRET = ""
-RECIPIENT_USERNAME = "sergikos9"
+RECIPIENT_USERNAME = "maa_ri888"
 RECIPIENT_CHAT_ID = ""  # Optional numeric private chat ID; otherwise owner /start registers it.
 
 LOG = logging.getLogger(__name__)
